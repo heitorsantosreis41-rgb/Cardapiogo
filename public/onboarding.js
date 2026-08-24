@@ -199,6 +199,4 @@ document.addEventListener('click', (e) => {
   if (t) { document.querySelectorAll('.tipo').forEach(x => x.classList.remove('sel')); t.classList.add('sel'); }
 });
 
-render_progress();
-async function render_progress(){}
-render();
+init();
