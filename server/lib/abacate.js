@@ -28,7 +28,7 @@ function header() {
 }
 
 // Cria uma cobrança PIX (checkout transparente). amount_cents em centavos.
-async function createPix({ amountCents, description, externalId, metadata, customer }) {
+async function createPix({ amountCents, description, externalId, metadata }) {
   const data = {
     method: "PIX",
     data: {
@@ -38,7 +38,7 @@ async function createPix({ amountCents, description, externalId, metadata, custo
       metadata: metadata || {},
     },
   };
-  if (customer && customer.name) data.data.customer = customer;
+
   const res = await fetch(API_BASE + "/transparents/create", {
     method: "POST",
     headers: header(),
