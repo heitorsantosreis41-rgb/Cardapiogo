@@ -1,0 +1,25 @@
+# CardápioGo — Render Blueprint (deploy em 1 clique)
+# Documentação: https://docs.render.com/blueprint-spec
+services:
+  - type: web
+    name: cardapiogo
+    runtime: node
+    plan: free
+    buildCommand: npm install --omit=dev
+    startCommand: node server/index.js
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000
+      # Ajuste abaixo para a URL pública deste serviço, ex.: https://cardapiogo.onrender.com
+      - key: CG_BASE_URL
+        sync: false
+      # Credenciais AbacatePay (preencha no painel do Render)
+      - key: ABACATEPAY_API_KEY
+        sync: false
+      - key: ABACATEPAY_WEBHOOK_SECRET
+        sync: false
+      - key: ABACATEPAY_PUBLIC_KEY
+        sync: false
