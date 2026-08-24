@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Criar conta — CardápioGo</title>
+<link rel="icon" href="/favicon.svg"><link rel="stylesheet" href="/assets/styles.css">
+</head>
+<body>
+<div class="auth-wrap">
+  <div class="auth-card">
+    <a class="brand" href="/" style="justify-content:center;display:flex"><span class="logo-mark">🍔</span>CardápioGo</a>
+    <h1>Crie seu cardápio grátis 🚀</h1>
+    <p class="sub">Cadastre seu negócio em poucos minutos.</p>
+    <div class="err-box" id="err"></div>
+    <form id="f">
+      <div class="field"><label>Seu nome</label><input id="nome" placeholder="Maria Silva" required></div>
+      <div class="field"><label>Nome do restaurante</label><input id="restaurante" placeholder="Burger House" required></div>
+      <div class="field"><label>WhatsApp (com DDI, ex: 5511999990000)</label><input id="whatsapp" placeholder="5511999990000"></div>
+      <div class="field"><label>E-mail</label><input id="email" type="email" placeholder="voce@restaurante.com" required></div>
+      <div class="field"><label>Senha</label><input id="senha" type="password" placeholder="Mínimo 6 caracteres" required minlength="6"></div>
+      <button class="btn btn-primary btn-block btn-lg" type="submit" id="btn">Criar minha conta</button>
+    </form>
+    <div class="auth-alt">Já tem conta? <a href="/login.html">Entrar</a></div>
+  </div>
+</div>
+<script>
+document.getElementById('f').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = document.getElementById('btn'); btn.disabled = true; btn.textContent = 'Criando…';
+  const err = document.getElementById('err');
+  const r = await fetch('/api/auth/register', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ nome: nome.value, restaurante: restaurante.value, whatsapp: whatsapp.value, email: email.value, senha: senha.value }) });
+  const d = await r.json();
+  if (!r.ok) { err.textContent = d.error; err.classList.add('show'); btn.disabled=false; btn.textContent='Criar minha conta'; return; }
+  location.href = '/onboarding.html';
+});
+</script>
+</body>
+</html>
