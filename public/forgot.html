@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Recuperar senha — CardápioGo</title>
+<link rel="icon" href="/favicon.svg"><link rel="stylesheet" href="/assets/styles.css">
+</head>
+<body>
+<div class="auth-wrap">
+  <div class="auth-card">
+    <a class="brand" href="/" style="justify-content:center;display:flex"><span class="logo-mark">🍔</span>CardápioGo</a>
+    <h1>Recuperar senha</h1>
+    <p class="sub">Digite seu e-mail e enviaremos um link de redefinição.</p>
+    <div class="ok-box" id="ok"></div>
+    <div class="err-box" id="err"></div>
+    <form id="f">
+      <div class="field"><label>E-mail</label><input id="email" type="email" placeholder="voce@restaurante.com" required></div>
+      <button class="btn btn-primary btn-block btn-lg" type="submit" id="btn">Enviar link</button>
+    </form>
+    <div class="auth-alt"><a href="/login.html">Voltar para o login</a></div>
+  </div>
+</div>
+<script>
+document.getElementById('f').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = document.getElementById('btn'); btn.disabled = true; btn.textContent='Enviando…';
+  const r = await fetch('/api/auth/forgot', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ email: email.value }) });
+  const d = await r.json();
+  btn.disabled=false; btn.textContent='Enviar link';
+  if (d.resetLink) {
+    document.getElementById('ok').innerHTML = 'Link gerado (demo sem e-mail): <a href="'+d.resetLink+'" style="font-weight:700;color:#1a8f4b">abrir redefinição</a>';
+    document.getElementById('ok').classList.add('show');
+  } else { document.getElementById('err').textContent='Se o e-mail existir, enviaremos um link.'; document.getElementById('err').classList.add('show'); }
+});
+</script>
+</body>
+</html>
