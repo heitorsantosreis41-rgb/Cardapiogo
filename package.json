@@ -1,0 +1,22 @@
+{
+  "name": "cardapiogo",
+  "version": "1.0.0",
+  "description": "CardápioGo — MicroSaaS de cardápio digital para pequenos negócios de alimentação no Brasil.",
+  "main": "server/index.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node server/index.js",
+    "test": "node test.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "express": "^4.19.2",
+    "qrcode": "^1.5.3"
+  },
+  "license": "MIT",
+  "private": true
+}
