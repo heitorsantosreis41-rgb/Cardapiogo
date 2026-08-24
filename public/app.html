@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Painel — CardápioGo</title>
+<link rel="icon" href="/favicon.svg"><link rel="stylesheet" href="/assets/app.css">
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="side-top">
+      <a class="brand" href="/"><span class="logo-mark">🍔</span><span>CardápioGo<small>Escaneou. Abriu. Pediu.</small></span></a>
+    </div>
+    <nav class="nav" id="nav"></nav>
+    <div class="side-foot">
+      <div class="plan-chip" id="planChip"></div>
+      <button class="btn btn-ghost btn-sm btn-block" id="btnLogout">Sair</button>
+    </div>
+  </aside>
+  <div class="main">
+    <div class="topbar">
+      <button class="burger" id="burger">☰</button>
+      <div class="page-title" id="pageTitle">Dashboard</div>
+      <div class="top-user"><span class="avatar" id="userAvatar">U</span><span id="userName"></span></div>
+    </div>
+    <main class="content" id="content"></main>
+  </div>
+</div>
+<div class="modal-backdrop" id="modalBackdrop">
+  <div class="modal" id="modal"></div>
+</div>
+<div class="toast-wrap" id="toasts"></div>
+<script src="/app.js"></script>
+</body>
+</html>
