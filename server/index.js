@@ -13,6 +13,7 @@ const qr = require("./lib/qr");
 const seed = require("./lib/seed");
 const abacate = require("./lib/abacate");
 const crypto = require("crypto");
+const email = require("./lib/email");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -84,9 +85,66 @@ const api = express.Router();
 function getOwnRestaurant(user) {
   return db.all("restaurants").find((r) => r.user_id === user.id) || null;
 }
-function getOwnSub(user) {
-  return db.all("subscriptions").find((s) => s.user_id === user.id) || null;
+// ============ ASSINATURA — renovação e corte ============
+const RENEWAL_WARNING_DAYS = 3; // avisa quando faltam <= N dias p/ vencer
+function isPaidPlan(planoId) {
+  const p = PLANS[planoId];
+  return !!p && p.preco_mensal > 0;
 }
+function isSubExpired(sub) {
+  return !!sub && sub.status === "ativo" && sub.data_renovacao && new Date(sub.data_renovacao).getTime() < Date.now();
+}
+// Se a assinatura paga venceu, rebaixa p/ Grátis (status expirado) => corta o acesso pago.
+function getOwnSub(user) {
+  let sub = db.all("subscriptions").find((s) => s.user_id === user.id) || null;
+  if (sub && isPaidPlan(sub.plano) && isSubExpired(sub)) {
+    db.update("subscriptions", sub.id, { plano: PLANO_PADRAO, status: "expirado" });
+    sub = db.getById("subscriptions", sub.id);
+  }
+  return sub;
+}
+// Rotina que avisa o vencimento e aplica o corte nas assinaturas.
+async function checkSubscriptions() {
+  for (const sub of db.all("subscriptions")) {
+    if (!isPaidPlan(sub.plano)) continue;
+    const user = db.getById("users", sub.user_id);
+    // 1) Venceu => corta (rebaixa p/ Grátis) e avisa por e-mail.
+    if (isSubExpired(sub)) {
+      if (sub.status === "ativo") {
+        db.update("subscriptions", sub.id, { plano: PLANO_PADRAO, status: "expirado" });
+        console.log("[assinatura] " + sub.user_id + " expirou -> rebaixada p/ Grátis");
+        if (user) {
+          try {
+            await email.sendEmail({
+              to: user.email,
+              subject: "Sua assinatura CardápioGo expirou",
+              html: email.baseHtml(`<p>Olá, <b>${user.nome}</b>!</p><p>Sua assinatura expirou e seu cardápio voltou ao <b>plano Grátis</b>. Para reativar seus recursos avançados, renove pelo painel.</p>${email.cta(HOST + "/login.html", "Renovar assinatura")}`),
+            });
+          } catch (e) { console.error("[assinatura] erro ao avisar expiração:", e.message); }
+        }
+      }
+      continue;
+    }
+    // 2) Perto de vencer -> aviso único (evita repetir).
+    const msLeft = new Date(sub.data_renovacao).getTime() - Date.now();
+    const daysLeft = Math.ceil(msLeft / 86400000);
+    if (daysLeft <= RENEWAL_WARNING_DAYS && !sub.aviso_renovacao_enviado) {
+      db.update("subscriptions", sub.id, { aviso_renovacao_enviado: true });
+      if (user) {
+        try {
+          await email.sendEmail({
+            to: user.email,
+            subject: "Sua assinatura CardápioGo vence em breve",
+            html: email.baseHtml(`<p>Olá, <b>${user.nome}</b>!</p><p>Sua assinatura <b>${PLANS[sub.plano].nome}</b> vence em <b>${daysLeft} dia(s)</b>.</p><p>Renove para continuar com todos os recursos.</p>${email.cta(HOST + "/login.html", "Renovar assinatura")}`),
+          });
+        } catch (e) { console.error("[assinatura] erro ao avisar renovação:", e.message); }
+      }
+    }
+  }
+}
+checkSubscriptions();
+setInterval(checkSubscriptions, 15 * 60 * 1000); // a cada 15 min
+
 function productCount(restaurantId) {
   return db.count("products", (p) => p.restaurant_id === restaurantId);
 }
@@ -178,8 +236,18 @@ api.post("/auth/forgot", async (req, res) => {
   if (user) {
     const token = require("crypto").randomBytes(24).toString("hex");
     db.insert("password_resets", { user_id: user.id, token, used: false, expires_at: new Date(Date.now() + 3600000).toISOString() });
-    // Sem SMTP real: retornamos o link de redefinição (em produção, enviar por e-mail).
-    res.json({ ok: true, resetLink: `${HOST}/reset?token=${token}` });
+    const resetLink = `${HOST}/reset?token=${token}`;
+    try {
+      await email.sendEmail({
+        to: user.email,
+        subject: "Recuperação de senha — CardápioGo",
+        html: email.baseHtml(`<p>Olá, <b>${user.nome}</b>!</p><p>Recebemos um pedido para redefinir sua senha.</p>${email.cta(resetLink, "Redefinir minha senha")}<p style="font-size:13px;color:#888">Este link é válido por <b>1 hora</b>. Se não foi você, ignore este e-mail.</p>`),
+      });
+      res.json({ ok: true });
+    } catch (e) {
+      console.error("[forgot] erro ao enviar e-mail:", e.message);
+      res.status(502).json({ error: "Não foi possível enviar o e-mail de recuperação." });
+    }
   } else {
     res.json({ ok: true });
   }
